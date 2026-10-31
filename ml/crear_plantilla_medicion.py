@@ -28,7 +28,7 @@ lines = [
     ("Plantilla de medición del pretest y el postest", True),
     ("Lo más fácil es no llenarla a mano: el sistema genera este mismo archivo en Reportes → «Comparación manual vs. sistema». Usa esta plantilla solo si mediste fuera del sistema.", False),
     ("", False),
-    ("Cómo llenarla (hoja «Pares», una fila por tarea):", True),
+    ("Cómo llenarla (hoja «Pares», una fila por tarea): llena solo las celdas de color ANARANJADO.", True),
     ("1. Manual (s): segundos que tardó la tarea hecha a mano con Excel (pretest).", False),
     ("2. Sistema (s): segundos que tardó la misma tarea hecha con el sistema (postest).", False),
     ("3. Manual cumple / Sistema cumple: «Sí» o «No» según el criterio de la columna «Criterio» (en reportes I1 se deja vacío).", False),
@@ -58,7 +58,7 @@ for i, (ind, tarea, desc) in enumerate(TAREAS, start=2):
     vals = [ind, tarea, desc, CRITERIO[ind], None, None, f'=IF(AND(ISNUMBER(E{i}),ISNUMBER(F{i})),E{i}-F{i},"")', None, None, None, None, None]
     for j, v in enumerate(vals, start=1):
         c = ws.cell(row=i, column=j, value=v); c.border = box; c.alignment = wrap
-        if j in (5, 6, 10, 11) or (j in (8, 9) and ind != "I1"): c.fill = PatternFill("solid", fgColor="FFF8D6")
+        if j in (5, 6, 10, 11) or (j in (8, 9) and ind != "I1"): c.fill = PatternFill("solid", fgColor="FFD3A3")
         if j in (8, 9) and ind == "I1": c.value = "No aplica"; c.font = Font(color="9AA3B5", italic=True)
     secs.add(f"E{i}"); secs.add(f"F{i}")
     if ind != "I1": yes_no.add(f"H{i}"); yes_no.add(f"I{i}")
