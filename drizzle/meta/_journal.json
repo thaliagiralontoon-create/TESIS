@@ -1,0 +1,27 @@
+{
+  "version": "7",
+  "dialect": "postgresql",
+  "entries": [
+    {
+      "idx": 0,
+      "version": "7",
+      "when": 1792873398597,
+      "tag": "0000_steep_sleepwalker",
+      "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1792885273440,
+      "tag": "0001_mediciones",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792906161173,
+      "tag": "0002_asistente_ml",
+      "breakpoints": true
+    }
+  ]
+}

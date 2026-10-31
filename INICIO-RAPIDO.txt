@@ -1,0 +1,16 @@
+SISTEMA NAKAMA — INICIO RÁPIDO
+
+Este paquete incluye el código, el modelo ML y la base local con 1,232 incidencias históricas. Los registros de la empresa están en .local/nakama; guarda este ZIP de forma privada.
+
+Para iniciar en Windows:
+1. Extrae la carpeta ZIP en una ruta local.
+2. Instala Node.js y pnpm.
+3. Abre PowerShell en la carpeta extraída y ejecuta:
+   Copy-Item .env.example .env.local
+   pnpm install
+   pnpm dev
+4. Abre http://127.0.0.1:3001
+
+La aplicación usa la base local incluida. Conserva NAKAMA_ALLOW_REMOTE_DB=0 y DATABASE_URL vacío en .env.local. No hace falta volver a importar el Excel ni ejecutar el seed.
+
+La clasificación ML sugiere categorías y requiere confirmación del técnico. I4 e I5 aparecerán sin datos hasta que se registren verificaciones y actividades reales. El Excel de datos/ficha-verificacion.xlsx es un reporte generado desde la base incluida.
