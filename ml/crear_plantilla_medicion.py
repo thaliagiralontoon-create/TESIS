@@ -9,16 +9,16 @@ NAVY, GOLD, GREY = "0B1E6D", "F5C400", "F5F7FB"
 head = Font(bold=True, color="FFFFFF"); fill = PatternFill("solid", fgColor=NAVY); thin = Side(style="thin", color="D0D5E0")
 box = Border(left=thin, right=thin, top=thin, bottom=thin); wrap = Alignment(wrap_text=True, vertical="top")
 
-MESES = ["marzo", "abril", "mayo", "junio", "julio", "agosto", "setiembre", "octubre"]
-CONS = ["Estado actual de la incidencia H-INC-0150", "Técnico que atendió la incidencia H-INC-0300", "Categoría confirmada de la incidencia H-INC-0450", "Fecha y hora de cierre de la incidencia H-INC-0600", "Estado actual de la incidencia H-INC-0750", "Técnico que atendió la incidencia H-INC-0900", "Categoría confirmada de la incidencia H-INC-1050", "Fecha y hora de cierre de la incidencia H-INC-1200", "Número de incidencias registradas en julio de 2026", "Número de incidencias registradas en setiembre de 2026", "Número de incidencias de la categoría Hardware (marzo–octubre)", "Número de incidencias de la categoría Conectividad (marzo–octubre)", "Número de incidencias de prioridad Alta (marzo–octubre)", "Número de incidencias del área con más solicitudes", "Número de incidencias atendidas por el técnico TEC-003", "Mediana del tiempo de atención en agosto de 2026", "Mediana del tiempo de atención de la categoría Impresora", "Mediana del tiempo de atención de prioridad Crítica", "Mediana del tiempo de atención del técnico TEC-006", "Número de incidencias sin cierre al corte"]
-CASOS = ["0010", "0024", "0640", "0675", "0598", "0738", "0773", "0619", "0647", "0668", "0626", "0717", "0752", "0017", "0031", "0591", "0605", "0612", "0633", "0794"]
-TAREAS = ([("I1", f"R{k+1:02d}", f"Reporte mensual de incidencias — {m} 2026") for k, m in enumerate(MESES)]
-          + [("I1", "R09", "Reporte de atención por categoría (marzo–octubre 2026)"), ("I1", "R10", "Reporte de atención por prioridad (marzo–octubre 2026)")]
+# Mismo protocolo que src/lib/medicion.ts: muestra de 29 incidencias, una tarea por incidencia.
+MESES = ["marzo", "abril", "junio", "julio", "agosto", "setiembre"]
+CONS = ["Estado actual de la incidencia NKM-INC-0007", "Técnico que atendió la incidencia NKM-INC-0015", "Categoría confirmada de la incidencia NKM-INC-0019", "Fecha y hora de resolución de la incidencia NKM-INC-0022", "Número de incidencias registradas en julio de 2026", "Número de incidencias de la categoría Hardware", "Mediana del tiempo de atención de las incidencias de prioridad Baja"]
+VERIF = ["Número de incidencias registradas en julio 2026", "Número de incidencias registradas en agosto 2026", "Tiempo medio de atención (min) de las incidencias de julio 2026", "Tiempo medio de atención (min) de las incidencias de agosto 2026", "Tiempo medio de atención (min) de las incidencias de setiembre 2026", "Número de incidencias de prioridad Media", "Número de incidencias de prioridad Baja"]
+CASOS = ["0012", "0016", "0019", "0020", "0021", "0024", "0006"]
+TAREAS = ([("I1", f"R{k+1:02d}", f"Reporte mensual de incidencias de la muestra — {m} 2026") for k, m in enumerate(MESES)]
+          + [("I1", "R07", "Reporte de atención por categoría (muestra de 29 incidencias)"), ("I1", "R08", "Reporte de atención por prioridad (muestra de 29 incidencias)")]
           + [("I3", f"C{k+1:02d}", c) for k, c in enumerate(CONS)]
-          + [("I4", f"V{k+1:02d}", f"Número de incidencias registradas en {m} 2026") for k, m in enumerate(MESES)]
-          + [("I4", f"V{k+9:02d}", f"Tiempo medio de atención (min) de las incidencias cerradas registradas en {m} 2026") for k, m in enumerate(MESES)]
-          + [("I4", f"V{k+17:02d}", f"Número de incidencias de prioridad {p} (marzo–octubre 2026)") for k, p in enumerate(["Crítica", "Alta", "Media", "Baja"])]
-          + [("ML", f"T{k+1:02d}", f"Clasificar la incidencia H-INC-{c} y decidir a quién asignarla") for k, c in enumerate(CASOS)])
+          + [("I4", f"V{k+1:02d}", v) for k, v in enumerate(VERIF)]
+          + [("ML", f"T{k+1:02d}", f"Clasificar la incidencia NKM-INC-{c} y decidir a quién asignarla") for k, c in enumerate(CASOS)])
 NOMBRE = {"I1": "Generación de reportes", "I3": "Disponibilidad de información", "I4": "Precisión de indicadores", "ML": "Clasificación de incidencias (ML)"}
 CRITERIO = {"I1": "No aplica (solo tiempo)", "I3": "Sí, si la respuesta salió con datos actualizados en 60 s o menos", "I4": "Sí, si el valor difiere de la referencia 1 % o menos (0,5 en conteos)", "ML": "Sí, si la categoría elegida es la confirmada por el técnico"}
 

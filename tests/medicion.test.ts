@@ -2,7 +2,7 @@ import { describe,expect,it } from "vitest";
 import { cumpleDisponibilidad,cumplePrecision,mesLima,PROTOCOLO,resumen,valorReferencia } from "../src/lib/medicion";
 
 describe("medición pretest y postest",()=>{
- it("el protocolo tiene 10 reportes, 20 consultas y 20 verificaciones",()=>{expect(PROTOCOLO.filter(t=>t.indicador==="I1")).toHaveLength(10);expect(PROTOCOLO.filter(t=>t.indicador==="I3")).toHaveLength(20);expect(PROTOCOLO.filter(t=>t.indicador==="I4")).toHaveLength(20);expect(PROTOCOLO.filter(t=>t.indicador==="ML")).toHaveLength(20);expect(new Set(PROTOCOLO.map(t=>t.codigo)).size).toBe(70);});
+ it("el protocolo de la muestra tiene una tarea por incidencia: 8 reportes, 7 consultas, 7 verificaciones y 7 clasificaciones",()=>{expect(PROTOCOLO.filter(t=>t.indicador==="I1")).toHaveLength(8);expect(PROTOCOLO.filter(t=>t.indicador==="I3")).toHaveLength(7);expect(PROTOCOLO.filter(t=>t.indicador==="I4")).toHaveLength(7);expect(PROTOCOLO.filter(t=>t.indicador==="ML")).toHaveLength(7);expect(new Set(PROTOCOLO.map(t=>t.codigo)).size).toBe(29);});
  it("I3 exige datos actualizados y 60 segundos o menos",()=>{expect(cumpleDisponibilidad(60_000,true)).toBe(true);expect(cumpleDisponibilidad(60_001,true)).toBe(false);expect(cumpleDisponibilidad(5_000,false)).toBe(false);});
  it("I4 usa 0,5 en conteos y 1 % en promedios",()=>{expect(cumplePrecision(150.5,150,true)).toBe(true);expect(cumplePrecision(151,150,true)).toBe(false);expect(cumplePrecision(101,100,false)).toBe(true);expect(cumplePrecision(101.1,100,false)).toBe(false);});
  it("agrupa por mes en hora de Lima",()=>{expect(mesLima(new Date("2026-04-01T03:00:00Z"))).toBe("2026-03");expect(mesLima(new Date("2026-04-01T05:00:00Z"))).toBe("2026-04");});
