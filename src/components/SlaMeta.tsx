@@ -29,17 +29,24 @@ export function MetaEtiqueta({ registradaEn, fin }: { registradaEn: string; fin:
   return <span style={{ color, fontWeight: 600, whiteSpace: "nowrap" }}>{texto}</span>;
 }
 
-// Versión con barra para el detalle de la incidencia.
+// Versión con barra para el detalle: el tramo hasta la meta en azul (o en el color del estado si sigue abierta)
+// y el exceso sobre las 8 h en rojo rayado, con la marca de la meta.
 export default function MetaAtencion({ registradaEn, fin }: { registradaEn: string; fin: string | null }) {
   const { min, color, texto } = estadoMeta(registradaEn, fin, useAhora(!fin));
-  const avance = Math.min(min / META_MIN, 1);
-  return <div style={{ marginTop: 14 }}>
-    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", marginBottom: 6 }}>
-      <span className="metric-label">Meta de atención: 8 h</span><strong style={{ color }}>{texto}</strong>
+  const escala = Math.max(min, META_MIN); const dentro = Math.min(min, META_MIN) / escala; const exceso = Math.max(min - META_MIN, 0) / escala; const marca = META_MIN / escala;
+  return <div>
+    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "baseline", flexWrap: "wrap", gap: 8, marginBottom: 10 }}>
+      <div style={{ fontSize: 14, fontWeight: 600 }}>Cumplimiento de la meta <span style={{ fontWeight: 400, color: "#6B7090" }}>· 8 h</span></div>
+      <div style={{ fontSize: 14, fontWeight: 700, color }}>{texto}</div>
     </div>
-    <div style={{ height: 10, borderRadius: 5, background: "#E6E9F0", overflow: "hidden" }} role="progressbar" aria-valuemin={0} aria-valuemax={META_MIN} aria-valuenow={Math.round(min)}>
-      <div style={{ width: `${avance * 100}%`, height: "100%", background: color, transition: "width .4s" }} />
+    <div style={{ display: "flex", height: 12, borderRadius: 6, background: "#EEF0F5", overflow: "hidden" }} role="progressbar" aria-valuemin={0} aria-valuemax={META_MIN} aria-valuenow={Math.round(min)}>
+      <div style={{ width: `${dentro * 100}%`, background: fin || min > META_MIN ? "#1B2A8F" : color, transition: "width .4s" }} />
+      {exceso > 0 && <div style={{ width: `${exceso * 100}%`, background: "repeating-linear-gradient(135deg,#D92D20 0 6px,#E8574C 6px 12px)" }} />}
     </div>
-    <div className="subtle" style={{ display: "flex", justifyContent: "space-between", fontSize: 12, marginTop: 4 }}><span>Registro</span><span>{fin ? `${duracion(min)} de atención` : `${duracion(min)} transcurridas`}</span><span>8 h</span></div>
+    <div style={{ position: "relative", height: 20, fontSize: 12, color: "#6B7090", marginTop: 6 }}>
+      <span style={{ position: "absolute", left: 0 }}>0 h</span>
+      {exceso > 0 && <span style={{ position: "absolute", left: `${marca * 100}%`, transform: "translateX(-50%)", color: "#1A1D2E", fontWeight: 600 }}>▲ meta 8 h</span>}
+      <span style={{ position: "absolute", right: 0, color: min > META_MIN ? "#B42318" : "#1A1D2E", fontWeight: 600 }}>{exceso > 0 ? duracion(min) : fin ? duracion(min) : "8 h"}</span>
+    </div>
   </div>;
 }

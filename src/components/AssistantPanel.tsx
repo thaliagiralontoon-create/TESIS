@@ -15,37 +15,56 @@ export type Analysis = {
 };
 export const minutes = (m: number | null) => m == null ? "—" : m < 60 ? `${Math.round(m)} min` : `${(m / 60).toFixed(1)} h`;
 const pct = (v: number) => `${Math.round(v * 100)} %`;
+const MUTED = "#6B7090", LINE = "#EEF0F5";
+const etiqueta = { fontSize: 12, color: MUTED, marginBottom: 6 } as const;
+const cifra = { fontFamily: "ui-monospace, SFMono-Regular, Menlo, monospace", fontSize: 14, fontWeight: 600 } as const;
 
-// Medidor de riesgo en tres zonas (bajo < 20 %, medio < 40 %, alto) con la lectura en frecuencias: «unas 3 de cada 10».
-function RiskMeter({ value, abierta }: { value: number; abierta: number | null }) {
-  const nivel = value >= 0.4 ? { t: "Alto", c: "#C62828" } : value >= 0.2 ? { t: "Medio", c: "#E8692C" } : { t: "Bajo", c: "#1E8E5A" };
-  const deDiez = Math.round(value * 10);
+// Confianza de la categoría sugerida con barra; indica si coincide con la categoría ya confirmada.
+function Confianza({ categoria, valor, actual }: { categoria: string; valor: number; actual?: string | null }) {
+  const alta = valor >= 0.6; const color = alta ? "#067647" : "#B54708";
   return <div>
-    <div className="metric-label">Riesgo de superar 8 h</div>
-    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}><strong style={{ color: nivel.c, fontSize: 18 }}>{nivel.t}</strong><span style={{ color: nivel.c, fontWeight: 600 }}>{pct(value)}</span></div>
-    <div style={{ position: "relative", display: "flex", height: 8, borderRadius: 4, overflow: "hidden", margin: "6px 0 4px" }}>
-      <div style={{ width: "20%", background: "#CDEBDB" }} /><div style={{ width: "20%", background: "#FBDCC8" }} /><div style={{ width: "60%", background: "#F4C7C7" }} />
-      <div style={{ position: "absolute", left: `calc(${Math.min(value, 1) * 100}% - 2px)`, top: -2, width: 4, height: 12, background: nivel.c, borderRadius: 2 }} />
-    </div>
-    <div className="subtle" style={{ fontSize: 12 }}>{deDiez < 1 ? "Menos de 1 de cada 10" : `Unas ${deDiez} de cada 10`} incidencias como esta superan 8 h{abierta != null ? ` · abierta hace ${minutes(abierta)}` : " · estimado al registrarse"}</div>
+    <div style={etiqueta}>Categoría sugerida</div>
+    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}><div style={{ fontSize: 17, fontWeight: 600 }}>{categoria}</div><div style={{ ...cifra, color }}>{pct(valor)}</div></div>
+    <div style={{ height: 6, borderRadius: 3, background: LINE, marginTop: 10, overflow: "hidden" }}><div style={{ width: `${valor * 100}%`, height: "100%", background: alta ? "#12A150" : "#E8692C" }} /></div>
+    <div style={{ fontSize: 12, color: MUTED, marginTop: 8 }}>Confianza {alta ? "alta" : "baja: revisa la descripción"}{actual ? (actual === categoria ? " · coincide con la categoría actual" : ` · la categoría actual es ${actual}`) : ""}</div>
   </div>;
 }
 
-// Solo lo que usa el técnico para atender: categoría sugerida, riesgo de demora, preparación y pasos, y casos parecidos ya resueltos.
-export default function AssistantPanel({ data, compact = false }: { data: Analysis; compact?: boolean }) {
-  const p = data.procedimiento; const top = data.sugerencias[0]; const riesgo = data.riesgo.actual ?? data.riesgo.inicial;
-  return <section className="panel stack" style={{ borderTop: "4px solid #F5C400" }} aria-label="Asistente ML">
-    <div className="panel-head"><h2>Asistente ML</h2></div>
-    {data.decision && <div className="alert-strip" style={{ margin: 0 }}><span><strong>{data.decision.accion}.</strong> {data.decision.motivo}</span></div>}
-    <div className="kpi-list">
-      <div><div className="metric-label">Categoría sugerida</div><div><strong>{top?.categoria ?? "—"}</strong> {top && <span className={`badge ${top.probabilidad >= 0.6 ? "green" : "orange"}`}>{pct(top.probabilidad)}</span>}</div></div>
-      <RiskMeter value={riesgo} abierta={data.riesgo.actual != null ? data.riesgo.minutosAbierta : null} />
+// Riesgo de superar 8 h en tres zonas (bajo < 20 %, medio < 40 %, alto), con la lectura en frecuencias.
+function Riesgo({ valor, abierta }: { valor: number; abierta: number | null }) {
+  const nivel = valor >= 0.4 ? { t: "Alto", c: "#B42318" } : valor >= 0.2 ? { t: "Medio", c: "#B54708" } : { t: "Bajo", c: "#067647" };
+  const deDiez = Math.round(valor * 10);
+  return <div>
+    <div style={etiqueta}>Riesgo de superar 8 h</div>
+    <div style={{ display: "flex", alignItems: "baseline", justifyContent: "space-between", gap: 8 }}><div style={{ fontSize: 17, fontWeight: 600, color: nivel.c }}>{nivel.t}</div><div style={{ ...cifra, color: nivel.c }}>{pct(valor)}</div></div>
+    <div style={{ display: "flex", gap: 3, marginTop: 10, position: "relative" }}>
+      <div style={{ flex: 20, height: 6, borderRadius: "3px 0 0 3px", background: "#CDEEDB" }} /><div style={{ flex: 20, height: 6, background: "#FDE3C4" }} /><div style={{ flex: 60, height: 6, borderRadius: "0 3px 3px 0", background: "#FBD1CD" }} />
+      <div style={{ position: "absolute", left: `calc(${Math.min(valor, 1) * 100}% - 1px)`, top: -3, width: 3, height: 12, background: "#1A1D2E", borderRadius: 2 }} />
     </div>
-    {p && <div className="stack" style={{ gap: 8 }}>
-      <div><div className="metric-label">Procedimiento</div><strong>{p.titulo}</strong>{p.remoto && <span className="badge blue" style={{ marginLeft: 8 }}>Remoto</span>}</div>
-      {data.preparacion && <div className="help" style={{ margin: 0 }}><strong>Preparación:</strong> {data.preparacion}</div>}
-      {!compact && <ol style={{ margin: 0, paddingLeft: 20 }}>{p.pasos.map((s) => <li key={s}>{s}</li>)}</ol>}
+    <div style={{ fontSize: 12, color: MUTED, marginTop: 8 }}>{deDiez < 1 ? "Menos de 1 de cada 10" : `Unas ${deDiez} de cada 10`} incidencias similares superan la meta{abierta != null ? ` · abierta hace ${minutes(abierta)}` : ""}</div>
+  </div>;
+}
+
+export default function AssistantPanel({ data, compact = false, categoriaActual }: { data: Analysis; compact?: boolean; categoriaActual?: string | null }) {
+  const p = data.procedimiento; const top = data.sugerencias[0]; const riesgo = data.riesgo.actual ?? data.riesgo.inicial;
+  return <section style={{ background: "#fff", border: "1px solid #E4E6EE", borderRadius: 12, overflow: "hidden" }} aria-label="Asistente ML">
+    <div style={{ display: "flex", alignItems: "center", gap: 10, padding: "16px 22px", borderBottom: `1px solid ${LINE}` }}>
+      <span style={{ width: 8, height: 8, borderRadius: 2, background: "#F5C400" }} /><h2 style={{ margin: 0, fontSize: 16, fontWeight: 600 }}>Asistente ML</h2>
+      <span style={{ fontSize: 12, color: MUTED }}>{data.riesgo.actual != null ? "Se actualiza mientras la incidencia sigue abierta" : "Estimado al registrar la incidencia"}</span>
+    </div>
+    {data.decision && <div className="alert-strip" style={{ margin: "14px 22px 0" }}><span><strong>{data.decision.accion}.</strong> {data.decision.motivo}</span></div>}
+    <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit,minmax(220px,1fr))", borderBottom: `1px solid ${LINE}` }}>
+      <div style={{ padding: "18px 22px", borderRight: `1px solid ${LINE}` }}>{top ? <Confianza categoria={top.categoria} valor={top.probabilidad} actual={categoriaActual} /> : <div style={etiqueta}>Sin categoría sugerida</div>}</div>
+      <div style={{ padding: "18px 22px" }}><Riesgo valor={riesgo} abierta={data.riesgo.actual != null ? data.riesgo.minutosAbierta : null} /></div>
+    </div>
+    {p && <div style={{ padding: "18px 22px" }}>
+      <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 12, flexWrap: "wrap" }}>
+        <div style={{ fontSize: 12, color: MUTED }}>Procedimiento</div><div style={{ fontSize: 15, fontWeight: 600 }}>{p.titulo}</div>
+        <span style={{ fontSize: 12, fontWeight: 600, padding: "2px 9px", borderRadius: 999, background: p.remoto ? "#ECEEFB" : "#F4F5F8", color: p.remoto ? "#1B2A8F" : MUTED }}>{p.remoto ? "Remoto" : "Presencial"}</span>
+      </div>
+      {data.preparacion && <div style={{ fontSize: 13, lineHeight: 1.5, background: "#FFFBEB", border: "1px solid #F6E3A1", borderRadius: 8, padding: "10px 14px", marginBottom: compact ? 0 : 12, color: "#5C4400" }}><b>Preparación:</b> {data.preparacion}</div>}
+      {!compact && <div style={{ border: `1px solid ${LINE}`, borderRadius: 8, overflow: "hidden" }}>{p.pasos.map((s, i) => <div key={s} style={{ display: "flex", gap: 12, padding: "11px 14px", borderTop: i ? `1px solid ${LINE}` : "none", fontSize: 14 }}><span style={{ width: 22, height: 22, borderRadius: "50%", background: "#ECEEFB", color: "#1B2A8F", fontSize: 12, fontWeight: 700, display: "grid", placeItems: "center", flexShrink: 0 }}>{i + 1}</span>{s}</div>)}</div>}
     </div>}
-    {!compact && data.similares.length > 0 && <div><div className="metric-label">Casos parecidos resueltos</div><ul style={{ margin: "6px 0 0", paddingLeft: 18 }}>{data.similares.map((s) => <li key={s.id}><Link href={`/incidencias/${s.id}`}>{s.codigo}</Link> · {s.titulo} · {minutes(s.minutos)}<div className="subtle" style={{ fontSize: 12 }}>{[s.solucion, s.causa && `Causa: ${s.causa}`, s.repuesto && `Repuesto: ${s.repuesto}`].filter(Boolean).join(" · ")}</div></li>)}</ul></div>}
+    {!compact && data.similares.length > 0 && <div style={{ padding: "0 22px 18px" }}><div style={etiqueta}>Casos parecidos resueltos</div><ul style={{ margin: 0, paddingLeft: 18 }}>{data.similares.map((s) => <li key={s.id}><Link href={`/incidencias/${s.id}`}>{s.codigo}</Link> · {s.titulo} · {minutes(s.minutos)}<div style={{ fontSize: 12, color: MUTED }}>{[s.solucion, s.causa && `Causa: ${s.causa}`, s.repuesto && `Repuesto: ${s.repuesto}`].filter(Boolean).join(" · ")}</div></li>)}</ul></div>}
   </section>;
 }

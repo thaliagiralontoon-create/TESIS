@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { and, eq, inArray } from "drizzle-orm";
 import { z } from "zod";
 import { getDb } from "@/db/client";
-import { categorias, incidenciaEventos, incidencias, usuarios } from "@/db/schema";
+import { areas, categorias, incidenciaEventos, incidencias, usuarios } from "@/db/schema";
 import { AuthError, getCurrentUser } from "@/lib/auth";
 import { chooseLeastLoaded, transitionAllowed } from "@/lib/flujo-incidencias";
 
@@ -20,6 +20,8 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     const categories = await db.select().from(categorias);
     const staff = user.rol === "supervisor" ? await db.select().from(usuarios).where(and(eq(usuarios.rol, "tecnico"), eq(usuarios.activo, true))) : [];
     const [tecnico] = row.tecnicoId ? await db.select({ codigo: usuarios.codigo, nombre: usuarios.nombre }).from(usuarios).where(eq(usuarios.id, row.tecnicoId)).limit(1) : [];
+    const [reportante] = row.usuarioId ? await db.select({ codigo: usuarios.codigo, nombre: usuarios.nombre }).from(usuarios).where(eq(usuarios.id, row.usuarioId)).limit(1) : [];
+    const [area] = row.areaId ? await db.select({ nombre: areas.nombre }).from(areas).where(eq(areas.id, row.areaId)).limit(1) : [];
     // Asignación sugerida: carga de trabajo (casos asignados o en proceso) de cada técnico activo y el de menor carga,
     // con preferencia por los especialistas de la categoría, como en la priorización.
     let asignacion = null;
@@ -30,7 +32,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
       const sugerido = chooseLeastLoaded(staff.filter((t) => t.especialidadId === categoriaId), staff, loads);
       asignacion = { sugeridoId: sugerido?.id ?? null, cargas: staff.map((t) => ({ id: t.id, codigo: t.codigo, nombre: t.nombre, casos: loads.get(t.id) ?? 0 })).sort((a, b) => a.casos - b.casos || a.id - b.id) };
     }
-    return NextResponse.json({ ...row, eventos: events.map(({ event, actor }) => ({ ...event, actor })), categorias: categories, tecnicos: staff, tecnico: tecnico ?? null, asignacion });
+    return NextResponse.json({ ...row, eventos: events.map(({ event, actor }) => ({ ...event, actor })), categorias: categories, tecnicos: staff, tecnico: tecnico ?? null, reportante: reportante ?? null, area: area?.nombre ?? null, asignacion });
   } catch (error) {
     if (error instanceof AuthError) return NextResponse.json({ error: error.message }, { status: error.status });
     return NextResponse.json({ error: "No se pudo cargar el detalle." }, { status: 500 });
