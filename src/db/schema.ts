@@ -69,6 +69,7 @@ export const incidencias = pgTable("incidencias", {
   procedimientoUtil: boolean("procedimiento_util"),
   causa: varchar("causa", { length: 160 }),
   repuestoUsado: varchar("repuesto_usado", { length: 120 }),
+  requirioExterno: boolean("requirio_externo"),
 }, (table) => [
   check("incidencias_origen_check", sql`${table.origen} in ('sistema', 'historico')`),
   check("incidencias_prioridad_check", sql`${table.prioridad} in ('Baja', 'Media', 'Alta', 'Crítica')`),

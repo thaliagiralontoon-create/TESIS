@@ -7,7 +7,7 @@ import { AuthError, getCurrentUser } from "@/lib/auth";
 import { chooseLeastLoaded, transitionAllowed } from "@/lib/flujo-incidencias";
 
 export const runtime = "nodejs";
-const patchSchema = z.object({ estado: z.enum(["En proceso", "Resuelto", "Cerrado"] ).optional(), categoriaConfirmadaId: z.coerce.number().int().positive().optional(), solucion: z.string().max(5000).optional(), causa: z.string().trim().max(160).optional(), repuestoUsado: z.string().trim().max(120).optional(), procedimientoUtil: z.boolean().optional(), tecnicoId: z.coerce.number().int().positive().optional() });
+const patchSchema = z.object({ estado: z.enum(["En proceso", "Resuelto", "Cerrado"] ).optional(), categoriaConfirmadaId: z.coerce.number().int().positive().optional(), solucion: z.string().max(5000).optional(), causa: z.string().trim().max(160).optional(), repuestoUsado: z.string().trim().max(120).optional(), procedimientoUtil: z.boolean().optional(), requirioExterno: z.boolean().optional(), tecnicoId: z.coerce.number().int().positive().optional() });
 const limaNow = () => new Date();
 export async function GET(_request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -65,12 +65,13 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
         if (row.estado !== "Resuelto") return NextResponse.json({ error: "Primero debe quedar resuelta." }, { status: 400 });
       } else if (user.rol === "tecnico" ? row.tecnicoId !== user.id : user.rol !== "supervisor") return NextResponse.json({ error: "Solo el técnico asignado o supervisión puede cambiar este estado." }, { status: 403 });
       if (input.estado === "Resuelto" && !(input.categoriaConfirmadaId ?? row.categoriaConfirmadaId)) return NextResponse.json({ error: "Confirma la categoría antes de resolver." }, { status: 400 });
+      if (input.estado === "Resuelto" && input.requirioExterno === undefined) return NextResponse.json({ error: "Indica si se requirió un técnico externo." }, { status: 400 });
       const update: Partial<typeof incidencias.$inferInsert> = { estado: input.estado };
       if (input.estado === "En proceso") { update.asignadaEn = row.asignadaEn ?? now; update.resueltaEn = null; update.cerradaEn = null; }
-      if (input.estado === "Resuelto") { update.resueltaEn = now; update.solucion = input.solucion?.trim() || row.solucion; update.causa = input.causa || row.causa; update.repuestoUsado = input.repuestoUsado || row.repuestoUsado; if (input.procedimientoUtil !== undefined) update.procedimientoUtil = input.procedimientoUtil; }
+      if (input.estado === "Resuelto") { update.resueltaEn = now; update.solucion = input.solucion?.trim() || row.solucion; update.causa = input.causa || row.causa; update.repuestoUsado = input.repuestoUsado || row.repuestoUsado; if (input.procedimientoUtil !== undefined) update.procedimientoUtil = input.procedimientoUtil; update.requirioExterno = input.requirioExterno; }
       if (input.estado === "Cerrado") update.cerradaEn = now;
       await db.update(incidencias).set(update).where(eq(incidencias.id, row.id));
-      await db.insert(incidenciaEventos).values({ incidenciaId: row.id, usuarioId: user.id, evento: input.estado, detalle: input.estado === "Resuelto" ? [input.solucion, input.causa && `Causa: ${input.causa}`, input.repuestoUsado && `Repuesto: ${input.repuestoUsado}`].filter(Boolean).join(" · ") || null : null, ocurridoEn: now });
+      await db.insert(incidenciaEventos).values({ incidenciaId: row.id, usuarioId: user.id, evento: input.estado, detalle: input.estado === "Resuelto" ? [input.solucion, input.causa && `Causa: ${input.causa}`, input.repuestoUsado && `Repuesto: ${input.repuestoUsado}`, `Técnico externo: ${input.requirioExterno ? "sí" : "no"}`].filter(Boolean).join(" · ") || null : null, ocurridoEn: now });
     }
     const [updated] = await db.select().from(incidencias).where(eq(incidencias.id, row.id));
     return NextResponse.json(updated);

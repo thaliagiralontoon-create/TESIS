@@ -22,6 +22,7 @@ test("registrar, confirmar, resolver y cerrar una incidencia",async({page})=>{
   await expect(page.getByText("Categoría confirmada:")).toBeVisible();
   await page.getByRole("button",{name:"Iniciar atención"}).click();
   await page.getByPlaceholder("Describe la solución aplicada").fill("Se reemplazó el adaptador de prueba.");
+  await page.locator("#externo").selectOption("no");
   await page.getByRole("button",{name:"Marcar como resuelta"}).click();
   await expect(page.getByRole("button",{name:"Cerrar incidencia"})).toBeVisible();
   await page.getByRole("button",{name:"Cerrar incidencia"}).click();

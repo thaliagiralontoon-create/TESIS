@@ -22,6 +22,13 @@
       "when": 1792906161173,
       "tag": "0002_asistente_ml",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1793555933283,
+      "tag": "0003_tecnico_externo",
+      "breakpoints": true
     }
   ]
 }

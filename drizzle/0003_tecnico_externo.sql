@@ -1,0 +1,1 @@
+ALTER TABLE "incidencias" ADD COLUMN "requirio_externo" boolean;
