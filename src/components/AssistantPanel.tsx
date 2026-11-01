@@ -15,7 +15,21 @@ export type Analysis = {
 };
 export const minutes = (m: number | null) => m == null ? "—" : m < 60 ? `${Math.round(m)} min` : `${(m / 60).toFixed(1)} h`;
 const pct = (v: number) => `${Math.round(v * 100)} %`;
-const tone = (v: number) => v >= 0.4 ? "red" : v >= 0.2 ? "orange" : "green";
+
+// Medidor de riesgo en tres zonas (bajo < 20 %, medio < 40 %, alto) con la lectura en frecuencias: «unas 3 de cada 10».
+function RiskMeter({ value, abierta }: { value: number; abierta: number | null }) {
+  const nivel = value >= 0.4 ? { t: "Alto", c: "#C62828" } : value >= 0.2 ? { t: "Medio", c: "#E8692C" } : { t: "Bajo", c: "#1E8E5A" };
+  const deDiez = Math.round(value * 10);
+  return <div>
+    <div className="metric-label">Riesgo de superar 8 h</div>
+    <div style={{ display: "flex", alignItems: "baseline", gap: 8 }}><strong style={{ color: nivel.c, fontSize: 18 }}>{nivel.t}</strong><span style={{ color: nivel.c, fontWeight: 600 }}>{pct(value)}</span></div>
+    <div style={{ position: "relative", display: "flex", height: 8, borderRadius: 4, overflow: "hidden", margin: "6px 0 4px" }}>
+      <div style={{ width: "20%", background: "#CDEBDB" }} /><div style={{ width: "20%", background: "#FBDCC8" }} /><div style={{ width: "60%", background: "#F4C7C7" }} />
+      <div style={{ position: "absolute", left: `calc(${Math.min(value, 1) * 100}% - 2px)`, top: -2, width: 4, height: 12, background: nivel.c, borderRadius: 2 }} />
+    </div>
+    <div className="subtle" style={{ fontSize: 12 }}>{deDiez < 1 ? "Menos de 1 de cada 10" : `Unas ${deDiez} de cada 10`} incidencias como esta superan 8 h{abierta != null ? ` · abierta hace ${minutes(abierta)}` : " · estimado al registrarse"}</div>
+  </div>;
+}
 
 // Solo lo que usa el técnico para atender: categoría sugerida, riesgo de demora, preparación y pasos, y casos parecidos ya resueltos.
 export default function AssistantPanel({ data, compact = false }: { data: Analysis; compact?: boolean }) {
@@ -25,7 +39,7 @@ export default function AssistantPanel({ data, compact = false }: { data: Analys
     {data.decision && <div className="alert-strip" style={{ margin: 0 }}><span><strong>{data.decision.accion}.</strong> {data.decision.motivo}</span></div>}
     <div className="kpi-list">
       <div><div className="metric-label">Categoría sugerida</div><div><strong>{top?.categoria ?? "—"}</strong> {top && <span className={`badge ${top.probabilidad >= 0.6 ? "green" : "orange"}`}>{pct(top.probabilidad)}</span>}</div></div>
-      <div><div className="metric-label">Riesgo de superar 8 h</div><div><span className={`badge ${tone(riesgo)}`}>{pct(riesgo)}</span>{data.riesgo.actual != null && <span className="subtle"> · abierta hace {minutes(data.riesgo.minutosAbierta)}</span>}</div></div>
+      <RiskMeter value={riesgo} abierta={data.riesgo.actual != null ? data.riesgo.minutosAbierta : null} />
     </div>
     {p && <div className="stack" style={{ gap: 8 }}>
       <div><div className="metric-label">Procedimiento</div><strong>{p.titulo}</strong>{p.remoto && <span className="badge blue" style={{ marginLeft: 8 }}>Remoto</span>}</div>
