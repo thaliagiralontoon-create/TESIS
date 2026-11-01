@@ -19,7 +19,7 @@ test("registrar, confirmar, resolver y cerrar una incidencia",async({page})=>{
   await page.getByRole("link",{name:"Ver incidencia"}).click();
   await expect(page.getByRole("heading",{name:"Prueba E2E cargador"})).toBeVisible();
   await page.getByRole("button",{name:"Confirmar categoría"}).click();
-  await expect(page.getByText("Categoría confirmada:")).toBeVisible();
+  await expect(page.getByRole("button",{name:"Guardar categoría"})).toBeVisible();
   await page.getByRole("button",{name:"Iniciar atención"}).click();
   await page.getByPlaceholder("Describe la solución aplicada").fill("Se reemplazó el adaptador de prueba.");
   await page.locator("#externo").selectOption("no");
