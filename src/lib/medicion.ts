@@ -5,52 +5,35 @@ export type IndicadorMedicion = "I1" | "I3" | "I4" | "ML";
 export type Referencia =
   | { tipo: "conteo_mes"; mes: string }
   | { tipo: "media_mes"; mes: string }
-  | { tipo: "conteo_prioridad"; prioridad: string };
+  | { tipo: "conteo_prioridad"; prioridad: string }
+  | { tipo: "tiempo_incidencia"; codigo: string };
 export interface Tarea { codigo: string; indicador: IndicadorMedicion; descripcion: string; referencia?: Referencia; incidencia?: string }
 export const CATEGORIAS = ["Accesos", "Audio", "Conectividad", "Correo electrónico", "Hardware", "Impresora", "Seguridad", "Software/licencias"];
 
-// Protocolo sobre la muestra de 29 incidencias (una tarea por incidencia): 8 reportes (I1), 7 consultas (I3),
-// 7 verificaciones (I4) y 7 clasificaciones (componente ML). Las mismas tareas se miden en el pretest y el postest.
-const MESES = [["2026-03", "marzo"], ["2026-04", "abril"], ["2026-06", "junio"], ["2026-07", "julio"], ["2026-08", "agosto"], ["2026-09", "setiembre"]] as const;
+// Protocolo de la tesis: con cada una de las 29 incidencias de la muestra se hacen cuatro tareas, en este orden:
+// consulta de la información para asignarla (I3), cálculo de su tiempo de atención (I4), clasificación (ML)
+// y fila del reporte (I1). Las mismas 116 tareas se miden en el pretest y en el postest.
 const pad = (n: number) => String(n).padStart(2, "0");
+export const MUESTRA = Array.from({ length: 29 }, (_, i) => `NKM-INC-${String(i + 1).padStart(4, "0")}`);
 
-const REPORTES: Tarea[] = [
-  ...MESES.map(([, nombre], i) => ({ codigo: `R${pad(i + 1)}`, indicador: "I1" as const, descripcion: `Reporte mensual de incidencias de la muestra — ${nombre} 2026` })),
-  { codigo: "R07", indicador: "I1", descripcion: "Reporte de atención por categoría (muestra de 29 incidencias)" },
-  { codigo: "R08", indicador: "I1", descripcion: "Reporte de atención por prioridad (muestra de 29 incidencias)" },
-];
-
-const CONSULTAS: Tarea[] = [
-  "Estado actual de la incidencia NKM-INC-0007",
-  "Técnico que atendió la incidencia NKM-INC-0015",
-  "Categoría confirmada de la incidencia NKM-INC-0019",
-  "Fecha y hora de resolución de la incidencia NKM-INC-0022",
-  "Número de incidencias registradas en julio de 2026",
-  "Número de incidencias de la categoría Hardware",
-  "Mediana del tiempo de atención de las incidencias de prioridad Baja",
-].map((descripcion, i) => ({ codigo: `C${pad(i + 1)}`, indicador: "I3" as const, descripcion }));
-
-const VERIFICACIONES: Tarea[] = [
-  { codigo: "V01", indicador: "I4", descripcion: "Número de incidencias registradas en julio 2026", referencia: { tipo: "conteo_mes", mes: "2026-07" } },
-  { codigo: "V02", indicador: "I4", descripcion: "Número de incidencias registradas en agosto 2026", referencia: { tipo: "conteo_mes", mes: "2026-08" } },
-  { codigo: "V03", indicador: "I4", descripcion: "Tiempo medio de atención (min) de las incidencias de julio 2026", referencia: { tipo: "media_mes", mes: "2026-07" } },
-  { codigo: "V04", indicador: "I4", descripcion: "Tiempo medio de atención (min) de las incidencias de agosto 2026", referencia: { tipo: "media_mes", mes: "2026-08" } },
-  { codigo: "V05", indicador: "I4", descripcion: "Tiempo medio de atención (min) de las incidencias de setiembre 2026", referencia: { tipo: "media_mes", mes: "2026-09" } },
-  { codigo: "V06", indicador: "I4", descripcion: "Número de incidencias de prioridad Media", referencia: { tipo: "conteo_prioridad", prioridad: "Media" } },
-  { codigo: "V07", indicador: "I4", descripcion: "Número de incidencias de prioridad Baja", referencia: { tipo: "conteo_prioridad", prioridad: "Baja" } },
-];
-
-// Clasificación y asignación (componente ML): 7 incidencias de la muestra de seis categorías distintas.
-// A mano: se lee el texto y se decide; con el sistema: se parte de la sugerencia del modelo.
-const CLASIFICACION: Tarea[] = ["NKM-INC-0012", "NKM-INC-0016", "NKM-INC-0019", "NKM-INC-0020", "NKM-INC-0021", "NKM-INC-0024", "NKM-INC-0006"]
-  .map((incidencia, i) => ({ codigo: `T${pad(i + 1)}`, indicador: "ML" as const, incidencia, descripcion: `Clasificar la incidencia ${incidencia} y decidir a quién asignarla` }));
-
-export const PROTOCOLO: Tarea[] = [...REPORTES, ...CONSULTAS, ...VERIFICACIONES, ...CLASIFICACION];
+export const PROTOCOLO: Tarea[] = MUESTRA.flatMap((incidencia, i) => [
+  { codigo: `C${pad(i + 1)}`, indicador: "I3" as const, incidencia, descripcion: `Obtener la información para asignar ${incidencia}: estado, técnico y fecha de resolución` },
+  { codigo: `V${pad(i + 1)}`, indicador: "I4" as const, incidencia, descripcion: `Calcular el tiempo de atención (min) de ${incidencia}`, referencia: { tipo: "tiempo_incidencia" as const, codigo: incidencia } },
+  { codigo: `T${pad(i + 1)}`, indicador: "ML" as const, incidencia, descripcion: `Clasificar la incidencia ${incidencia}` },
+  { codigo: `R${pad(i + 1)}`, indicador: "I1" as const, incidencia, descripcion: `Elaborar la fila del reporte de ${incidencia}` },
+]);
 export const tareaPorCodigo = (codigo: string) => PROTOCOLO.find((tarea) => tarea.codigo === codigo);
 
-// I3: cumple si la respuesta se obtuvo en 60 s o menos con datos actualizados.
-export function cumpleDisponibilidad(duracionMs: number, datosActualizados: boolean) {
-  return datosActualizados && duracionMs <= 60_000;
+// I3: cumple si se obtuvo la información completa (estado, técnico y fecha de resolución); el tiempo se compara aparte.
+export function cumpleDisponibilidad(informacionCompleta: boolean) {
+  return informacionCompleta;
+}
+
+// Clasificación: la categoría elegida coincide con la confirmada. Se aceptan las abreviaturas anotadas en el pretest.
+const EQUIVALENTES: Record<string, string> = { correo: "correo electronico", software: "software/licencias" };
+const normalizarCategoria = (c: string) => { const s = c.normalize("NFD").replace(/[̀-ͯ]/g, "").trim().toLowerCase(); return EQUIVALENTES[s] ?? s; };
+export function categoriaCorrecta(elegida: string, confirmada: string) {
+  return normalizarCategoria(elegida) === normalizarCategoria(confirmada);
 }
 
 // I4: cumple si difiere del valor de referencia en 1 % o menos; en conteos, en 0,5 o menos.
@@ -62,7 +45,11 @@ export function cumplePrecision(obtenido: number, referencia: number, esConteo: 
 // Mes de registro en hora de Lima (UTC-5, sin horario de verano).
 export const mesLima = (fecha: Date) => new Date(fecha.getTime() - 5 * 3_600_000).toISOString().slice(0, 7);
 
-export function valorReferencia(referencia: Referencia, filas: Array<{ registradaEn: Date; cerradaEn: Date | null; resueltaEn: Date | null; prioridad: string }>) {
+export function valorReferencia(referencia: Referencia, filas: Array<{ codigo?: string; registradaEn: Date; cerradaEn: Date | null; resueltaEn: Date | null; prioridad: string }>) {
+  if (referencia.tipo === "tiempo_incidencia") {
+    const fila = filas.find((f) => f.codigo === referencia.codigo); const fin = fila && (fila.cerradaEn ?? fila.resueltaEn);
+    return fila && fin ? Math.round((fin.getTime() - fila.registradaEn.getTime()) / 60_000) : null;
+  }
   if (referencia.tipo === "conteo_mes") return filas.filter((fila) => mesLima(fila.registradaEn) === referencia.mes).length;
   if (referencia.tipo === "conteo_prioridad") return filas.filter((fila) => fila.prioridad === referencia.prioridad).length;
   const minutos = filas
