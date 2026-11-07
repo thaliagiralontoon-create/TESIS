@@ -5,7 +5,7 @@ type Task={codigo:string;indicador:"I1"|"I3"|"I4"|"ML";descripcion:string;incide
 type Hint={sugerencias:Array<{categoria:string;probabilidad:number}>;procedimiento:{titulo:string}|null;preparacion:string|null};
 type Row={id:number;indicador:string;fase:string;tarea:string;inicio:string;fin:string;duracionMs:number;respuesta:string|null;datosActualizados:boolean|null;valorObtenido:string|null;valorReferencia:string|null;cumple:boolean|null;observacion:string|null;anulada:boolean};
 // En el orden del protocolo: con cada incidencia, consulta, cálculo del tiempo, clasificación y fila del reporte.
-const INDICATORS=[["I3","1. Consulta"],["I4","2. Tiempo de atención"],["ML","3. Clasificación"],["I1","4. Fila del reporte"]] as const;
+const INDICATORS=[["I3","1. Consulta"],["I4","2. Cálculo del tiempo de atención"],["ML","3. Clasificación (tiempo y exactitud)"],["I1","4. Fila del reporte"]] as const;
 const PHASE_LABEL={pretest:"A mano (Excel)",postest:"Con el sistema"} as const;
 const seconds=(ms:number)=>(ms/1000).toFixed(1);
 export default function Measurement(){const [tasks,setTasks]=useState<Task[]>([]);const [rows,setRows]=useState<Row[]>([]);const [phase,setPhase]=useState<"pretest"|"postest">("pretest");const [indicator,setIndicator]=useState<Task["indicador"]>("I3");const [selected,setSelected]=useState("");const [startedAt,setStartedAt]=useState<Date|null>(null);const [endedAt,setEndedAt]=useState<Date|null>(null);const [now,setNow]=useState(Date.now());const [form,setForm]=useState({respuesta:"",datosActualizados:true,valorObtenido:"",observacion:""});const [error,setError]=useState("");const [notice,setNotice]=useState("");const [saving,setSaving]=useState(false);
